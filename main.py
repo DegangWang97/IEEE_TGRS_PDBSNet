@@ -240,7 +240,9 @@ def predict(opt):
     image = image.astype(np.float32)
     gt = input_data['map']
     gt = gt.astype(np.float32)
-    
+
+    image = ((image - image.min()) / (image.max() - image.min()))
+  
     band = image.shape[2]
     
     test_data = np.expand_dims(image, axis=0)
