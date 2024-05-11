@@ -32,7 +32,7 @@ of this software or its fitness for any particular purpose.
 import argparse
 
 from model import PDBSNet
-from dataset import PDBSNetData, pixel_shuffle_up_sampling, pixel_shuffle_down_sampling
+from dataset import PDBSNetData
 from utils import get_auc, setup_seed, TensorToHSI
 
 import torch
@@ -106,18 +106,13 @@ class Trainer(object):
         self.model.train(True)
         loss_train = []
         
-        train_data = pixel_shuffle_down_sampling(self.dataloader, self.opt.factor_train, pad=0)
-        
         loader_train = self.dataloader.to(self.device)
-        train_data = train_data.to(self.device)
         
         # forward net
-        output = self.model(train_data)
+        outputs = self.model(loader_train)
         
         # backward net
         self.optimizer.zero_grad()
-        
-        outputs = pixel_shuffle_up_sampling(output, self.opt.factor_train, pad=0)
         
         loss = self.criterion(outputs, loader_train)
         
@@ -181,7 +176,7 @@ def train_model(opt):
     setup_seed(opt.seed)
     
     loader_train, band = PDBSNetData(opt)
-    net = PDBSNet(band, band, nch_ker=opt.nch_ker, nblk=opt.nblk).to(device)
+    net = PDBSNet(factor=opt.factor_train, nch_in=band, nch_out=band, nch_ker=opt.nch_ker, nblk=opt.nblk).to(device)
     
     # Define Optimizers and Loss
     optimizer = optim.Adam(net.parameters(), lr=opt.learning_rate, betas=(0.5, 0.999), weight_decay=opt.weight_decay)
@@ -240,9 +235,9 @@ def predict(opt):
     image = image.astype(np.float32)
     gt = input_data['map']
     gt = gt.astype(np.float32)
-
+    
     image = ((image - image.min()) / (image.max() - image.min()))
-  
+
     band = image.shape[2]
     
     test_data = np.expand_dims(image, axis=0)
@@ -251,7 +246,7 @@ def predict(opt):
     # Device
     device = torch.device('cuda:{}'.format(0)) if torch.cuda.is_available() else torch.device('cpu')
     
-    net = PDBSNet(band, band, nch_ker=opt.nch_ker, nblk=opt.nblk).to(device)
+    net = PDBSNet(factor=opt.factor_test, nch_in=band, nch_out=band, nch_ker=opt.nch_ker, nblk=opt.nblk).to(device)
     net.load_state_dict(torch.load(model_weights, map_location = 'cuda:0'))
     
     t_begin = time.time()
@@ -259,11 +254,9 @@ def predict(opt):
     net.eval()
     
     img_old = loader_test
-    test_data = pixel_shuffle_down_sampling(loader_test, opt.factor_test, pad=0)
-    test_data = test_data.to(device)
-
-    img = net(test_data)
-    img_new = pixel_shuffle_up_sampling(img, opt.factor_test, pad=0)
+    test_data = loader_test.to(device)
+    
+    img_new = net(test_data)
 
     HSI_old = TensorToHSI(img_old)
     HSI_new = TensorToHSI(img_new)
