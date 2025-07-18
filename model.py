@@ -24,11 +24,24 @@ class PDBSNet(nn.Module):
         self.tail = nn.Sequential(*ly)
 
     def forward(self, x):
+        orig_h, orig_w = x.shape[2], x.shape[3]
+        
+        pad_h = 0
+        pad_w = 0
+
+        if orig_h % self.factor != 0:
+            pad_h = self.factor - (orig_h % self.factor)
+            x = F.pad(x, (0, 0, 0, pad_h), mode='reflect')
+
+        if orig_w % self.factor != 0:
+            pad_w = self.factor - (orig_w % self.factor)
+            x = F.pad(x, (0, pad_w, 0, 0), mode='reflect')
+
         if self.factor > 1:
             x_pd = pixel_shuffle_down_sampling(x, self.factor, pad=0)
         else:
             x_pd = x
-        
+
         x_head = self.head(x_pd)
 
         br1 = self.branch1(x_head)
@@ -40,6 +53,9 @@ class PDBSNet(nn.Module):
             x_bkg = pixel_shuffle_up_sampling(x_out_pd, self.factor, pad=0)
         else:
             x_bkg = x_out_pd
+
+        if pad_h > 0 or pad_w > 0:
+            x_bkg = x_bkg[:, :, :orig_h, :orig_w]
         
         return x_bkg
 
