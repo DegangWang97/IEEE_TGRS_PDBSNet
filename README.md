@@ -1,5 +1,5 @@
-# PDBSNet
-This is the official repository for  ["PDBSNet: Pixel-Shuffle Downsampling Blind-Spot Reconstruction Network for Hyperspectral Anomaly Detection"](https://ieeexplore.ieee.org/abstract/document/10124448) in IEEE Transactions on Geoscience and Remote Sensing (TGRS). 
+# PDBSNet-ESI Highly Cited Paper (TOP 1%)🏆
+This is the official repository for  ["PDBSNet: Pixel-Shuffle Downsampling Blind-Spot Reconstruction Network for Hyperspectral Anomaly Detection"](https://ieeexplore.ieee.org/abstract/document/10124448) in IEEE Transactions on Geoscience and Remote Sensing (TGRS), an ESI Highly Cited Paper (TOP 1%)🏆. 
 
 ![alt text](./figs/PDBSNet_model.jpg)
 
